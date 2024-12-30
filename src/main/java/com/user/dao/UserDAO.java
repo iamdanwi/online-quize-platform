@@ -1,6 +1,5 @@
 package com.user.dao;
 
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,5 +88,31 @@ public class UserDAO {
             }
         }
         return users;
+    }
+
+    // Authenticate User (for login)
+    public User authenticateUser(String email, String password) throws SQLException {
+        String query = "SELECT * FROM Users WHERE email = ?";
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, email);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedPasswordHash = rs.getString("password_hash");
+                    // Assuming you will compare the hashed password in real use case
+                    if (storedPasswordHash.equals(password)) {
+                        return new User(
+                            rs.getInt("user_id"),
+                            rs.getString("username"),
+                            storedPasswordHash,
+                            rs.getString("email"),
+                            rs.getString("role"),
+                            rs.getTimestamp("created_at").toLocalDateTime()
+                        );
+                    }
+                }
+            }
+        }
+        return null;
     }
 }
